@@ -13,7 +13,8 @@ const OBSERVABLES = Dict{Symbol, Bool}(
 
 
 N = 80 # total number of particles
-g = 0.01
+g11 = 0.01
+g22 = 0.01
 dt = 0.025
 size_pairs = [(Int(N/2), Int(N/2))]
 
@@ -50,7 +51,7 @@ g12_values = [0.012694]
 parent_folder = PREFIX
 
 total = generate_folders(;
-    g, dt, size_pairs, num_steps, num_walkers,
+    g11, g22, dt, size_pairs, num_steps, num_walkers,
     forward_walk_steps_values, time_order, g12_values,
     method=METHOD, trial_wf=TRIAL_WF, observables=OBSERVABLES, prefix=PREFIX,
     parent_folder, acum_mixed, measurement_stride,

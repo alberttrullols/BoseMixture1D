@@ -35,7 +35,8 @@ function validate_choices(; method, trial_wf, observables)
 end
 
 function generate_folders(;
-    g::Float64,
+    g11::Float64,
+    g22::Float64,
     dt::Float64,
     size_pairs::Vector{Tuple{Int, Int}},
     num_steps::Int,
@@ -59,6 +60,10 @@ function generate_folders(;
     R_match_ud_values::Vector{Float64}=Float64[])
 
     validate_choices(; method, trial_wf, observables)
+    g11 > 0.0 || throw(ArgumentError("g11 must be positive"))
+    g22 > 0.0 || throw(ArgumentError("g22 must be positive"))
+    !isempty(g12_values) && all(>(0.0), g12_values) ||
+        throw(ArgumentError("g12_values must be a nonempty list of positive couplings"))
     vmc_step_size > 0 || throw(ArgumentError("vmc_step_size must be positive"))
     !isempty(size_pairs) && all(p -> p[1] >= 0 && p[2] >= 0 && p[1] + p[2] > 0, size_pairs) ||
         throw(ArgumentError("size_pairs must be a nonempty list of (N1, N2) with nonnegative entries and N1+N2 > 0"))
@@ -81,7 +86,7 @@ function generate_folders(;
     obs_list = enabled_observables(observables)
     obs_string = isempty(obs_list) ? "none" : join(obs_list, ",")
     count = 0
-    # nothing => keep the default exponents from g12 and g for this folder set
+    # nothing => use the full-box matching radius for this folder set
     R_same_variants = isempty(R_match_same_values) ? [nothing] : R_match_same_values
     R_ud_variants = isempty(R_match_ud_values) ? [nothing] : R_match_ud_values
 
@@ -101,8 +106,8 @@ function generate_folders(;
             R_tag = @sprintf("_Rs%.6f_Rud%.6f", R_same_use, R_ud_use)
         end
         size_tag = @sprintf("_N1_%d_N2_%d", N1, N2)
-        folder_name = @sprintf("%s_%s_g%.6f_g12%.6f_fwd%d%s_nw%d",
-                               prefix, trial_wf, g, g12, fwd, size_tag, num_walkers) * R_tag
+        folder_name = @sprintf("%s_%s_g11%.6f_g22%.6f_g12%.6f_fwd%d%s_nw%d",
+                               prefix, trial_wf, g11, g22, g12, fwd, size_tag, num_walkers) * R_tag
         folder = isempty(parent_folder) ? folder_name : joinpath(parent_folder, folder_name)
         mkpath(folder)
         runner_path = relpath(joinpath(@__DIR__, RUNNER_NAME), abspath(folder))
@@ -122,8 +127,8 @@ function generate_folders(;
             println(f, "vmc_production_steps $vmc_production_steps")
             println(f, "vmc_step_size       $vmc_step_size")
             println(f, "save_state          $save_state")
-            @printf(f,  "g11                 %.6f\n", g)
-            @printf(f,  "g22                 %.6f\n", g)
+            @printf(f,  "g11                 %.6f\n", g11)
+            @printf(f,  "g22                 %.6f\n", g22)
             @printf(f,  "g12                 %.6f\n", g12)
             for (key, val) in R_params
                 @printf(f, "%-20s%.12f\n", key, val)
@@ -137,7 +142,8 @@ function generate_folders(;
 
         open(joinpath(folder, "job.sh"), "w") do f
             println(f, "#!/bin/bash")
-            @printf(f,  "#SBATCH --job-name=%s%s_g12%.6f_fwd%d\n", trial_wf, size_tag, g12, fwd)
+            @printf(f,  "#SBATCH --job-name=%s%s_g11%.6f_g22%.6f_g12%.6f_fwd%d\n",
+                         trial_wf, size_tag, g11, g22, g12, fwd)
             println(f, "#SBATCH --chdir=.")
             println(f, "#SBATCH --output=job_%j.out")
             println(f, "#SBATCH --error=job_%j.err")

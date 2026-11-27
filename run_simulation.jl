@@ -54,7 +54,8 @@ function build_2b_trial(p::Dict{String, String}, L::Float64)
     # Sector order (11, 12, 22) as in pair_sector; a = -2 hbar^2/(m g) with hbar = m = 1.
     a = (-2.0 / g11, -2.0 / g12, -2.0 / g22)
     if trial_wf == "2b_uncoupled_matching"
-        # Matching radii for the 11/22 sector (shared, since g11 == g22) and the 12 sector; default L/2 recovers 2b_uncoupled.
+        # Matching radii for the 11/22 sectors and the 12 sector. g11 and g22 remain
+        # independent even when they use the same matching radius; L/2 recovers 2b_uncoupled.
         R_same = haskey(p, "R_match_same") ? parse(Float64, p["R_match_same"]) : L / 2
         R_ud = haskey(p, "R_match_ud") ? parse(Float64, p["R_match_ud"]) : L / 2
         all(R -> 0.0 < R <= L / 2, (R_same, R_ud)) ||
