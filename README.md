@@ -4,7 +4,7 @@ This repository provides variational and diffusion Quantum Monte Carlo tools to
 simulate the zero-temperature ground state of one-dimensional two-component
 Bose gases with repulsive contact interactions.
 
-## Example: single-component gas
+## Equation of state of a single-component Bose gas
 
 For density $n$, the figure compares the Monte Carlo energy per particle with
 standard limiting expressions. For repulsive interactions, $a_{1D}<0$; define
@@ -30,7 +30,7 @@ $$
 
 ![Single-component energy versus density](figures/energy_per_particle_vs_n_a1D.jpg)
 
-## Example: phase separation
+## Phase separation in a two-component Bose gas
 
 For a symmetric mixture, mean-field theory predicts phase separation when the
 inter-species coupling $g_{\uparrow\downarrow}$ exceeds the intra-species
