@@ -60,8 +60,8 @@ function generate_folders(;
 
     validate_choices(; method, trial_wf, observables)
     vmc_step_size > 0 || throw(ArgumentError("vmc_step_size must be positive"))
-    !isempty(size_pairs) && all(p -> p[1] > 0 && p[2] > 0, size_pairs) ||
-        throw(ArgumentError("size_pairs must be a nonempty list of (N1, N2) with positive entries"))
+    !isempty(size_pairs) && all(p -> p[1] >= 0 && p[2] >= 0 && p[1] + p[2] > 0, size_pairs) ||
+        throw(ArgumentError("size_pairs must be a nonempty list of (N1, N2) with nonnegative entries and N1+N2 > 0"))
     measurement_stride > 0 || throw(ArgumentError("measurement_stride must be positive"))
     equilibration_steps >= 0 || throw(ArgumentError("equilibration_steps must be nonnegative"))
     !isempty(forward_walk_steps_values) && all(>(0), forward_walk_steps_values) ||
@@ -106,6 +106,7 @@ function generate_folders(;
         folder = isempty(parent_folder) ? folder_name : joinpath(parent_folder, folder_name)
         mkpath(folder)
         runner_path = relpath(joinpath(@__DIR__, RUNNER_NAME), abspath(folder))
+        project_path = dirname(runner_path)
 
         open(joinpath(folder, "params.dat"), "w") do f
             println(f, "N1                  $N1")
@@ -147,17 +148,17 @@ function generate_folders(;
             println(f, "#SBATCH --qos=$(MACHINE.qos)")
             println(f, "")
             foreach(line -> println(f, line), MACHINE.modules)
-            println(f, "julia --project=~ -t \$SLURM_CPUS_PER_TASK $runner_path 2>&1 | tee run.log")
+            println(f, "julia --project=\"$project_path\" -t \$SLURM_CPUS_PER_TASK \"$runner_path\" 2>&1 | tee run.log")
         end
 
         open(joinpath(folder, "run_local.sh"), "w") do f
             println(f, "#!/bin/bash")
             if method_is_parallel
                 println(f, "export OPENBLAS_NUM_THREADS=1")
-                println(f, "julia -t 1 $runner_path > run.log 2>&1")
+                println(f, "julia --project=\"$project_path\" -t 1 \"$runner_path\" > run.log 2>&1")
             else
                 println(f, "set -o pipefail")
-                println(f, "julia -t auto $runner_path 2>&1 | tee run.log")
+                println(f, "julia --project=\"$project_path\" -t auto \"$runner_path\" 2>&1 | tee run.log")
             end
         end
 
