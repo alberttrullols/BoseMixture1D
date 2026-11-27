@@ -1,4 +1,4 @@
-# BoseMixture1D
+# BoseGases1D
 
 This repository provides variational and diffusion Quantum Monte Carlo tools to
 simulate the zero-temperature ground state of one-dimensional two-component
